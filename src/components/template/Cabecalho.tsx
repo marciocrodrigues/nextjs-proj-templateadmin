@@ -1,4 +1,5 @@
-import { useTheme } from "next-themes";
+import useAppData from "@/data/hook/useAppData";
+import BotaoAlternarTema from "./BotaoAlternarTema";
 import Titulo from "./Titulo";
 
 interface CabecalhoProps {
@@ -7,15 +8,12 @@ interface CabecalhoProps {
 }
 
 export default function Cabecalho(props: CabecalhoProps) {
-  const { systemTheme, theme, setTheme } = useTheme();
-
+  const { tema, alternarTema } = useAppData();
   return (
-    <div>
+    <div className={`flex`}>
       <Titulo titulo={props.titulo} subtitulo={props.subtitulo} />
-      <div>
-        <button onClick={() => setTheme("dark")}>Dark</button>
-        <br />
-        <button onClick={() => setTheme("light")}>Light</button>
+      <div className={` flex flex-grow justify-end`}>
+        <BotaoAlternarTema tema={tema} altenarTema={alternarTema} />
       </div>
     </div>
   );
