@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { IconeLua, IconeSol } from "../icons";
 
 interface BotaoAlternarTemaProps {
