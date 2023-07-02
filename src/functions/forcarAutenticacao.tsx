@@ -1,14 +1,11 @@
 import Head from "next/head";
 import Image from "next/image";
 import router from "next/router";
-import loading from "../../../public/images/loading.gif";
+import loading from "../../public/images/loading.gif";
 import useAuth from "@/data/hook/useAuth";
 
-interface ForcarAutenticacaoProps {
-  children?: any;
-}
-
-export default function ForcarAutenticacao(props: ForcarAutenticacaoProps) {
+// proteção de rota como função e não como componente
+export default function forcarAutenticacao(jsx: any) {
   const { usuario, carregando } = useAuth();
 
   function renderizarConteudo() {
@@ -25,7 +22,7 @@ export default function ForcarAutenticacao(props: ForcarAutenticacaoProps) {
             }}
           />
         </Head>
-        {props.children}
+        {jsx}
       </>
     );
   }

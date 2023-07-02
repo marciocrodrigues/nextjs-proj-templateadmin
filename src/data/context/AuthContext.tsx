@@ -7,6 +7,8 @@ import Usuario from "@/model/Usuario";
 interface AuthContextProps {
   usuario?: Usuario | null;
   carregando?: boolean;
+  cadastrar?: (email: string, senha: string) => Promise<void>;
+  login?: (email: string, senha: string) => Promise<void>;
   loginGoogle?: () => Promise<void>;
   logout?: () => Promise<void>;
 }
@@ -63,9 +65,36 @@ export function AuthProvider(props: any) {
       const resp = await firebase
         .auth()
         .signInWithPopup(new firebase.auth.GoogleAuthProvider());
-      console.log(resp.user);
 
-      configurarSessao(resp.user);
+      await configurarSessao(resp.user);
+      route.push("/");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function login(email: string, senha: string) {
+    try {
+      setCarregando(true);
+      const resp = await firebase
+        .auth()
+        .signInWithEmailAndPassword(email, senha);
+
+      await configurarSessao(resp.user);
+      route.push("/");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function cadastrar(email: string, senha: string) {
+    try {
+      setCarregando(true);
+      const resp = await firebase
+        .auth()
+        .createUserWithEmailAndPassword(email, senha);
+
+      await configurarSessao(resp.user);
       route.push("/");
     } finally {
       setCarregando(false);
@@ -97,6 +126,8 @@ export function AuthProvider(props: any) {
       value={{
         usuario,
         carregando,
+        cadastrar,
+        login,
         loginGoogle,
         logout,
       }}
