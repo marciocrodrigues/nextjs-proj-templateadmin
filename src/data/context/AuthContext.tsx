@@ -1,11 +1,13 @@
 import route from "next/router";
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
+import Cookies from "js-cookie";
 import firebase from "../../firebase/config";
 import Usuario from "@/model/Usuario";
 
 interface AuthContextProps {
   usuario?: Usuario | null;
   loginGoogle?: () => Promise<void>;
+  logout?: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps>({});
@@ -25,27 +27,73 @@ async function usuarioNormalizado(
   };
 }
 
+function gerenciarCookie(logado: boolean) {
+  if (logado) {
+    Cookies.set("admin-template-cod3r-auth", String(logado), {
+      expires: 7,
+    });
+  } else {
+    Cookies.remove("admin-template-cod3r-auth");
+  }
+}
+
 export function AuthProvider(props: any) {
+  const [carregando, setCarregando] = useState(true);
   const [usuario, setUsuario] = useState<Usuario | null>(null);
 
-  async function loginGoogle() {
-    const resp = await firebase
-      .auth()
-      .signInWithPopup(new firebase.auth.GoogleAuthProvider());
-    console.log(resp.user);
-
-    if (resp.user?.email) {
-      const usuario = await usuarioNormalizado(resp.user);
+  async function configurarSessao(usuarioFirebase: firebase.User) {
+    if (usuarioFirebase?.email) {
+      const usuario = await usuarioNormalizado(usuarioFirebase);
       setUsuario(usuario);
-      route.push("/");
+      gerenciarCookie(true);
+      setCarregando(false);
+      return usuario.email;
+    } else {
+      setUsuario(null);
+      gerenciarCookie(false);
+      setCarregando(false);
+      return false;
     }
   }
+
+  async function loginGoogle() {
+    try {
+      setCarregando(true);
+      const resp = await firebase
+        .auth()
+        .signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      console.log(resp.user);
+
+      configurarSessao(resp.user);
+      route.push("/");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function logout() {
+    try {
+      await firebase.auth().signOut();
+      await configurarSessao(null);
+    } finally {
+      setCarregando(true);
+    }
+  }
+
+  // cancelar o observer que verifica mudança do token
+  useEffect((): firebase.Unsubscribe => {
+    if (Cookies.get("admin-template-cod3r-auth")) {
+      const cancelar = firebase.auth().onIdTokenChanged(configurarSessao);
+      return () => cancelar;
+    }
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         usuario,
         loginGoogle,
+        logout,
       }}
     >
       {props.children}
