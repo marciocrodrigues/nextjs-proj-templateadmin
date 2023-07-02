@@ -6,6 +6,7 @@ import Usuario from "@/model/Usuario";
 
 interface AuthContextProps {
   usuario?: Usuario | null;
+  carregando?: boolean;
   loginGoogle?: () => Promise<void>;
   logout?: () => Promise<void>;
 }
@@ -73,10 +74,11 @@ export function AuthProvider(props: any) {
 
   async function logout() {
     try {
+      setCarregando(true);
       await firebase.auth().signOut();
       await configurarSessao(null);
     } finally {
-      setCarregando(true);
+      setCarregando(false);
     }
   }
 
@@ -85,6 +87,8 @@ export function AuthProvider(props: any) {
     if (Cookies.get("admin-template-cod3r-auth")) {
       const cancelar = firebase.auth().onIdTokenChanged(configurarSessao);
       return () => cancelar;
+    } else {
+      setCarregando(false);
     }
   }, []);
 
@@ -92,6 +96,7 @@ export function AuthProvider(props: any) {
     <AuthContext.Provider
       value={{
         usuario,
+        carregando,
         loginGoogle,
         logout,
       }}
